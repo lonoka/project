@@ -1,8 +1,10 @@
 package poly.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -38,59 +40,77 @@ public class RController {
 		return "success";
 	}
 
+	@RequestMapping(value = "kTest")
+	@ResponseBody
+	public String kTest(HttpServletRequest request, Model model, HttpSession session) throws Exception {
+
+		commuService.SearchDcComData("폴리텍");
+		return "success";
+	}
+
 	@RequestMapping(value = "komoran_test")
 	@ResponseBody
 	public String komoran_test(HttpServletRequest request, Model model, HttpSession session) throws Exception {
 		// collection 이름으로 mongoDB에서 데이터 가져오기
-		String colNm = "DcCom_"+DateUtil.getDateTime("yyyyMMddHH");
-		List<CommuDTO> rList = commuService.getData(colNm);
-		// 코모란 시작
-		// 분석 결과값이 나온 단어 리스트
-		List<String> komoranList = new ArrayList<String>();
+		List<String> sList = new ArrayList<String>();
+		sList.add("DcCom_");
+		sList.add("Slr_");
+		sList.add("Ppom_");
+		sList.add("82Cook_");
+		sList.add("Mlb_");
+		Map<String, Object> pMap = new HashMap();
+		for (int j = 0; j < sList.size(); j++) {
+			String colNm = sList.get(j) + DateUtil.getDateTime("yyyyMMddHH");
+			List<CommuDTO> rList = commuService.getData(colNm);
+			// 코모란 시작
+			// 분석 결과값이 나온 단어 리스트
+			List<String> komoranList = new ArrayList<String>();
 
-		// 코모란 분석기 돌리고 나온 단어 리스트 를 카운팅 한 리스트
-		List<String> kWordList = new ArrayList<String>();
-		List<Integer> kCntList = new ArrayList<Integer>();
+			// 코모란 분석기 돌리고 나온 단어 리스트 를 카운팅 한 리스트
+			List<String> kWordList = new ArrayList<String>();
+			List<Integer> kCntList = new ArrayList<Integer>();
 
-		Iterator<CommuDTO> InList = rList.iterator();
-		
-		// 리소스 사용량을 줄이기 위해 분석을 나눠서 함
-		while (InList.hasNext()) {
-			log.info("문장 분석중입니다.");
-			CommuDTO pDTO = new CommuDTO();
-			pDTO = InList.next();
-			Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
-			KomoranResult analyKomoranResult = komoran.analyze(pDTO.getTitle());
-			komoranList.addAll(analyKomoranResult.getNouns());
-			komoran = null;
-			analyKomoranResult = null;
-			pDTO = null;
-		}
-		for (int i = 0; i < komoranList.size(); i++) {
-			if (komoranList.get(i).length() > 1) {
-				if (!kWordList.contains(komoranList.get(i))) {
-					kWordList.add(komoranList.get(i));
-					int tmp = 0;
-					for (int j = 0; j < komoranList.size(); j++) {
-						if (komoranList.get(i).equals(komoranList.get(j)))
-							tmp++;
+			Iterator<CommuDTO> InList = rList.iterator();
+
+			// 리소스 사용량을 줄이기 위해 분석을 나눠서 함
+			while (InList.hasNext()) {
+				log.info("문장 분석중입니다.");
+				CommuDTO pDTO = new CommuDTO();
+				pDTO = InList.next();
+				Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
+				KomoranResult analyKomoranResult = komoran.analyze(pDTO.getTitle());
+				komoranList.addAll(analyKomoranResult.getNouns());
+				komoran = null;
+				analyKomoranResult = null;
+				pDTO = null;
+			}
+			for (int i = 0; i < komoranList.size(); i++) {
+				if (komoranList.get(i).length() > 1) {
+					if (!kWordList.contains(komoranList.get(i))) {
+						kWordList.add(komoranList.get(i));
+						int tmp = 0;
+						for (int k = 0; k < komoranList.size(); k++) {
+							if (komoranList.get(i).equals(komoranList.get(k)))
+								tmp++;
+						}
+						kCntList.add(tmp);
 					}
-					kCntList.add(tmp);
 				}
 			}
-		}
 
-		List<DataDTO> pList = new ArrayList<DataDTO>();
-		for (int i = 0; i < kWordList.size(); i++) {
-			DataDTO pDTO = new DataDTO();
-			pDTO.setWord(kWordList.get(i));
-			pDTO.setCount(kCntList.get(i));
-			pList.add(pDTO);
-			pDTO = null;
+			List<DataDTO> pList = new ArrayList<DataDTO>();
+			for (int i = 0; i < kWordList.size(); i++) {
+				DataDTO pDTO = new DataDTO();
+				pDTO.setWord(kWordList.get(i));
+				pDTO.setCount(kCntList.get(i));
+				pList.add(pDTO);
+				pDTO = null;
+			}
+			kWordList = null;
+			kCntList = null;
+			pMap.put(sList.get(j), pList);
+			pList = null;
 		}
-		kWordList = null;
-		kCntList = null;
-
 		// 코모란 끝
 		return "success";
 	}
