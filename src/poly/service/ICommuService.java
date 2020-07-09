@@ -1,6 +1,7 @@
 package poly.service;
 
 import java.util.List;
+import java.util.Map;
 
 import poly.dto.CommuDTO;
 import poly.dto.DataDTO;
@@ -50,6 +51,8 @@ public interface ICommuService {
 	public int Search82CookData(String str) throws Exception;
 	// 검색 크롤링 하기
 	public int SearchMPData(String str) throws Exception;
+	// 코모란 분석
+	public Map<String, Object> komoran(String str) throws Exception;
 	
 
 }

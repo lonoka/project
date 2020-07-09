@@ -21,6 +21,9 @@ import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.springframework.stereotype.Service;
 
+import kr.co.shineware.nlp.komoran.constant.DEFAULT_MODEL;
+import kr.co.shineware.nlp.komoran.core.Komoran;
+import kr.co.shineware.nlp.komoran.model.KomoranResult;
 import poly.dto.CheckDTO;
 import poly.dto.CommuDTO;
 import poly.dto.DataDTO;
@@ -609,9 +612,9 @@ public class CommuService implements ICommuService {
 		}
 
 		// R 연결 후 라이브러리 추가
-		//RConnection c = new RConnection("54.180.67.42",6311);
-		RConnection c = new RConnection("192.168.170.161",6311);
-		c.login("lonoka","scarlet14!");
+		// RConnection c = new RConnection("54.180.67.42",6311);
+		RConnection c = new RConnection("192.168.170.161", 6311);
+		c.login("lonoka", "scarlet14!");
 
 		String colNm = str + DateUtil.getDateTime("yyyyMMddHH");
 		String colStr = colNm;
@@ -888,18 +891,18 @@ public class CommuService implements ICommuService {
 		sheader.put("Accept-Encoding", "gzip, deflate");
 		sheader.put("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7");
 
-		Document odoc = Jsoup.connect("http://www.slrclub.com/service/search/?keyword=" + str)
-				.userAgent(userAgent).headers(sheader).cookies(loginCookie).get();
+		Document odoc = Jsoup.connect("http://www.slrclub.com/service/search/?keyword=" + str).userAgent(userAgent)
+				.headers(sheader).cookies(loginCookie).get();
 		Elements e = odoc.select("td.list_num");
 		Iterator<Element> pageList = e.select("> a").iterator();
 		int page = Integer.parseInt(odoc.select("span#actpg").text());
 		int tmp = page;
-		while(pageList.hasNext()) {
+		while (pageList.hasNext()) {
 			Element pInfo = pageList.next();
 			log.info(pInfo);
-			if(pInfo.hasText()) {
+			if (pInfo.hasText()) {
 				int pNum = Integer.parseInt(pInfo.text());
-				if(pNum>page) {
+				if (pNum > page) {
 					tmp = pNum;
 				}
 			}
@@ -911,8 +914,7 @@ public class CommuService implements ICommuService {
 		if (tmp > 40) {
 			for (int i = 0; i < 40; i++) {
 				Document doc = Jsoup
-						.connect("http://www.slrclub.com/service/search/?page="
-								+ (tmp - i) + "&keyword=" + str)
+						.connect("http://www.slrclub.com/service/search/?page=" + (tmp - i) + "&keyword=" + str)
 						.userAgent(userAgent).headers(sheader).cookies(loginCookie).get();
 
 				Elements element = doc.select("ul.list");
@@ -923,13 +925,13 @@ public class CommuService implements ICommuService {
 					String title = postInfo.select("p.title > a").text();
 					String writer = postInfo.select("span.name > span").text();
 					String time = postInfo.select("span.date").text();
-					if(time.contains(":")) {
-						time = DateUtil.getDateTime("yyyy-MM-dd")+" 00:00:00";
-					}else {
+					if (time.contains(":")) {
+						time = DateUtil.getDateTime("yyyy-MM-dd") + " 00:00:00";
+					} else {
 						time = time.replaceAll("/", "-");
 						time = "20" + time + " 00:00:00";
 					}
-					if(postInfo.select("div.info > span").eq(3).text().substring(6).equals("")) {
+					if (postInfo.select("div.info > span").eq(3).text().substring(6).equals("")) {
 						break;
 					}
 					int views = Integer.parseInt(postInfo.select("div.info > span").eq(3).text().substring(6));
@@ -964,7 +966,7 @@ public class CommuService implements ICommuService {
 					String title = postInfo.select("p.title > a").text();
 					String writer = postInfo.select("span.name > span").text();
 					String time = postInfo.select("span.date").text();
-					if(postInfo.select("div.info > span").eq(3).text().substring(6).equals("")) {
+					if (postInfo.select("div.info > span").eq(3).text().substring(6).equals("")) {
 						break;
 					}
 					int views = Integer.parseInt(postInfo.select("div.info > span").eq(3).text().substring(6));
@@ -1015,10 +1017,12 @@ public class CommuService implements ICommuService {
 		String colNm = "DcCom_" + str + "_" + DateUtil.getDateTime("yyyyMMddHH");
 
 		List<CommuDTO> pList = new ArrayList<CommuDTO>();
-		
+
 		for (int i = 1; i <= 20; i++) {
-			Document doc = Jsoup.connect("https://gall.dcinside.com/board/lists/?id=pridepc_new3&search_pos=&s_type=search_all&s_keyword="
-					+ str + "&page=" + i).get();
+			Document doc = Jsoup.connect(
+					"https://gall.dcinside.com/board/lists/?id=pridepc_new3&search_pos=&s_type=search_all&s_keyword="
+							+ str + "&page=" + i)
+					.get();
 			Elements element = doc.select("table.gall_list");
 			int tmp = 0;
 			Iterator<Element> postList = element.select("tr.us-post").iterator();
@@ -1045,7 +1049,7 @@ public class CommuService implements ICommuService {
 				pList.add(pDTO);
 				tmp += 1;
 			}
-			if(tmp!=20) {
+			if (tmp != 20) {
 				break;
 			}
 		}
@@ -1091,7 +1095,7 @@ public class CommuService implements ICommuService {
 				String title = postInfo.select("span.title > a").text();
 				String writer = postInfo.select("p.desc > span").eq(0).text();
 				String time = postInfo.select("p.desc > span").eq(2).text();
-				if(postInfo.select("p.desc > span").eq(1).text().contains("정보없음")) {
+				if (postInfo.select("p.desc > span").eq(1).text().contains("정보없음")) {
 					break;
 				}
 				int views = Integer.parseInt(postInfo.select("p.desc > span").eq(1).text().substring(5));
@@ -1112,7 +1116,7 @@ public class CommuService implements ICommuService {
 
 				pList.add(pDTO);
 			}
-			if(tmp!=50) {
+			if (tmp != 50) {
 				break;
 			}
 		}
@@ -1143,7 +1147,7 @@ public class CommuService implements ICommuService {
 		String colNm = "82Cook_" + str + "_" + DateUtil.getDateTime("yyyyMMddHH");
 
 		List<CommuDTO> pList = new ArrayList<CommuDTO>();
-		
+
 		for (int i = 1; i <= 24; i++) {
 			Document doc = Jsoup.connect("https://www.82cook.com/entiz/enti.php?bn=15&searchType=search&search1=1&keys="
 					+ str + "&page=" + i).get();
@@ -1152,7 +1156,7 @@ public class CommuService implements ICommuService {
 			Iterator<Element> postList = element.select("tbody > tr").iterator();
 			while (postList.hasNext()) {
 				Element postInfo = postList.next();
-				if(!postInfo.select("td").eq(0).text().equals("검색결과가 없습니다")) {
+				if (!postInfo.select("td").eq(0).text().equals("검색결과가 없습니다")) {
 					String title = postInfo.select("td.title > a").text();
 					String writer = postInfo.select("td.user_function").text();
 					String time = postInfo.select("td.regdate").attr("title");
@@ -1173,10 +1177,10 @@ public class CommuService implements ICommuService {
 					pDTO.setLink(link);
 
 					pList.add(pDTO);
-					tmp+=1;
+					tmp += 1;
 				}
 			}
-			if(tmp!=25) {
+			if (tmp != 25) {
 				break;
 			}
 		}
@@ -1207,10 +1211,12 @@ public class CommuService implements ICommuService {
 		String colNm = "Mlb_" + str + "_" + DateUtil.getDateTime("yyyyMMddHH");
 
 		List<CommuDTO> pList = new ArrayList<CommuDTO>();
-		
+
 		for (int i = 1; i <= 20; i++) {
-			Document doc = Jsoup.connect("http://mlbpark.donga.com/mp/b.php?select=sct&m=search&b=bullpen&select=sct&query="
-					+ str + "&p=" + (i-1)*3+"1").get();
+			Document doc = Jsoup
+					.connect("http://mlbpark.donga.com/mp/b.php?select=sct&m=search&b=bullpen&select=sct&query=" + str
+							+ "&p=" + (i - 1) * 3 + "1")
+					.get();
 			Elements element = doc.select("table.tbl_type01");
 			int tmp = 0;
 			Iterator<Element> postList = element.select("tbody > tr").iterator();
@@ -1219,11 +1225,11 @@ public class CommuService implements ICommuService {
 				String title = postInfo.select("td").eq(1).select("a").attr("alt");
 				String writer = postInfo.select("span.nick").text();
 				String time = postInfo.select("span.date").text();
-				if(time.contains(":")) {
+				if (time.contains(":")) {
 					time = DateUtil.getDateTime("yyyy-MM-dd");
 				}
 				int views = 0;
-				if(StringReplace(postInfo.select("span.viewV").text()).equals("")){
+				if (StringReplace(postInfo.select("span.viewV").text()).equals("")) {
 					break;
 				}
 				views = Integer.parseInt(StringReplace(postInfo.select("span.viewV").text()));
@@ -1242,9 +1248,9 @@ public class CommuService implements ICommuService {
 				pDTO.setLink(link);
 
 				pList.add(pDTO);
-				tmp+=1;
+				tmp += 1;
 			}
-			if(tmp!=30) {
+			if (tmp != 30) {
 				break;
 			}
 		}
@@ -1268,5 +1274,77 @@ public class CommuService implements ICommuService {
 		commuMapper.insertData(pList, colNm);
 
 		return 0;
+	}
+
+	@Override
+	public Map<String, Object> komoran(String str) throws Exception {
+		
+		Map<String, Object> pMap = new HashMap<String, Object>();
+		
+		String comu = "";
+
+		if (str.contains("DcCom_")) {
+			comu = "컴퓨터 본체 갤러리";
+		} else if (str.contains("Slr_")) {
+			comu = "SLR클럽";
+		} else if (str.contains("Ppom_")) {
+			comu = "뽐뿌";
+		} else if (str.contains("82Cook_")) {
+			comu = "82쿡";
+		} else if (str.contains("Mlb_")) {
+			comu = "MLBPARK";
+		}
+
+		List<CommuDTO> rList = commuService.getData(str);
+		// 코모란 시작
+		// 분석 결과값이 나온 단어 리스트
+		List<String> komoranList = new ArrayList<String>();
+
+		// 코모란 분석기 돌리고 나온 단어 리스트 를 카운팅 한 리스트
+		List<String> kWordList = new ArrayList<String>();
+		List<Integer> kCntList = new ArrayList<Integer>();
+
+		Iterator<CommuDTO> InList = rList.iterator();
+
+		// 리소스 사용량을 줄이기 위해 분석을 나눠서 함
+		while (InList.hasNext()) {
+			log.info("문장 분석중입니다.");
+			CommuDTO pDTO = new CommuDTO();
+			pDTO = InList.next();
+			Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
+			KomoranResult analyKomoranResult = komoran.analyze(pDTO.getTitle());
+			komoranList.addAll(analyKomoranResult.getNouns());
+			komoran = null;
+			analyKomoranResult = null;
+			pDTO = null;
+		}
+		for (int i = 0; i < komoranList.size(); i++) {
+			if (komoranList.get(i).length() > 1) {
+				if (!kWordList.contains(komoranList.get(i))) {
+					kWordList.add(komoranList.get(i));
+					int tmp = 0;
+					for (int k = 0; k < komoranList.size(); k++) {
+						if (komoranList.get(i).equals(komoranList.get(k)))
+							tmp++;
+					}
+					kCntList.add(tmp);
+				}
+			}
+		}
+
+		List<DataDTO> pList = new ArrayList<DataDTO>();
+		for (int i = 0; i < kWordList.size(); i++) {
+			DataDTO pDTO = new DataDTO();
+			pDTO.setWord(kWordList.get(i));
+			pDTO.setCount(kCntList.get(i));
+			pList.add(pDTO);
+			pDTO = null;
+		}
+		kWordList = null;
+		kCntList = null;
+		pMap.put(str, pList);
+		pList = null;
+		
+		return pMap;
 	}
 }
