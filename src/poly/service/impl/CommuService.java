@@ -1305,19 +1305,22 @@ public class CommuService implements ICommuService {
 		List<Integer> kCntList = new ArrayList<Integer>();
 
 		Iterator<CommuDTO> InList = rList.iterator();
-
-		// 리소스 사용량을 줄이기 위해 분석을 나눠서 함
+		String komo = "";
+		
 		while (InList.hasNext()) {
 			log.info("문장 분석중입니다.");
 			CommuDTO pDTO = new CommuDTO();
 			pDTO = InList.next();
-			Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
-			KomoranResult analyKomoranResult = komoran.analyze(pDTO.getTitle());
-			komoranList.addAll(analyKomoranResult.getNouns());
-			komoran = null;
-			analyKomoranResult = null;
+			komo += pDTO.getTitle()+" ";
 			pDTO = null;
+			
 		}
+		InList = null;
+		Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
+		KomoranResult analyKomoranResult = komoran.analyze(komo);
+		komoranList.addAll(analyKomoranResult.getNouns());
+		komoran = null;
+		analyKomoranResult = null;
 		for (int i = 0; i < komoranList.size(); i++) {
 			if (komoranList.get(i).length() > 1) {
 				if (!kWordList.contains(komoranList.get(i))) {
@@ -1342,7 +1345,7 @@ public class CommuService implements ICommuService {
 		}
 		kWordList = null;
 		kCntList = null;
-		pMap.put(str, pList);
+		pMap.put(comu, pList);
 		pList = null;
 		
 		return pMap;
