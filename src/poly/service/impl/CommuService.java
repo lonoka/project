@@ -779,41 +779,6 @@ public class CommuService implements ICommuService {
 		return 0;
 	}
 
-	@Override
-	public void cTest() throws Exception {
-
-		Map<String, String> header = new HashMap<String, String>();
-		header.put("origin", "http://www.slrclub.com");
-		header.put("Referer", "http://www.slrclub.com");
-		header.put("Accept", "application/json, text/javascript, */*; q=0.01");
-		header.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-		header.put("Accept-Encoding", "gzip, deflate, br");
-		header.put("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7");
-		Map<String, String> data = new HashMap<String, String>();
-		data.put("user_id", "lonoka");
-		data.put("password", "scarlet14!");
-		data.put("autologin", "1");
-		data.put("group_no", "1");
-		String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36";
-		Connection.Response response = Jsoup.connect("https://www.slrclub.com/login/process.php").userAgent(userAgent)
-				.headers(header).data(data).method(Connection.Method.POST).execute();
-
-		Map<String, String> loginCookie = response.cookies();
-		log.info("###############################################");
-		log.info(loginCookie);
-		log.info("###############################################");
-
-		Map<String, String> sheader = new HashMap<String, String>();
-		sheader.put("Accept",
-				"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-		sheader.put("Accept-Encoding", "gzip, deflate");
-		sheader.put("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7");
-
-		Document doc = Jsoup.connect("http://www.slrclub.com/service/search/?keyword=%EC%A3%BC%EC%8B%9D&section=free")
-				.userAgent(userAgent).headers(sheader).cookies(loginCookie).get();
-
-		log.info(doc);
-	}
 
 	// 특수기호 제거 함수
 	public static String StringReplace(String str) {

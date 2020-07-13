@@ -33,8 +33,6 @@ public interface ICommuService {
 	// 데이터 분석
 	public int AnalysisData(String str) throws Exception;
 
-	public void cTest() throws Exception;
-	
 	//크롤링 중인지 확인
 	public boolean checkCrawling(List<String> sList) throws Exception;
 	
