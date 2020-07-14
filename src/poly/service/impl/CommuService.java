@@ -779,7 +779,6 @@ public class CommuService implements ICommuService {
 		return 0;
 	}
 
-
 	// 특수기호 제거 함수
 	public static String StringReplace(String str) {
 		String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
@@ -1243,9 +1242,9 @@ public class CommuService implements ICommuService {
 
 	@Override
 	public Map<String, Object> komoran(String str) throws Exception {
-		
+
 		Map<String, Object> pMap = new HashMap<String, Object>();
-		
+
 		String comu = "";
 
 		if (str.contains("DcCom_")) {
@@ -1271,19 +1270,22 @@ public class CommuService implements ICommuService {
 
 		Iterator<CommuDTO> InList = rList.iterator();
 		String komo = "";
-		
+
+		// 분석할 문장을 하나의 긴 문장으로 변경
 		while (InList.hasNext()) {
-			log.info("문장 분석중입니다.");
 			CommuDTO pDTO = new CommuDTO();
 			pDTO = InList.next();
-			komo += pDTO.getTitle()+" ";
+			komo += pDTO.getTitle() + " ";
 			pDTO = null;
-			
+
 		}
 		InList = null;
+		// 코모란 분석을 위한 Komoran객체
 		Komoran komoran = new Komoran(DEFAULT_MODEL.FULL);
 		KomoranResult analyKomoranResult = komoran.analyze(komo);
+		// 분석된 결과중 단어들 만 나온 리스트
 		komoranList.addAll(analyKomoranResult.getNouns());
+		// 메모리 누수를 막기 위한 초기화
 		komoran = null;
 		analyKomoranResult = null;
 		for (int i = 0; i < komoranList.size(); i++) {
@@ -1312,7 +1314,7 @@ public class CommuService implements ICommuService {
 		kCntList = null;
 		pMap.put(comu, pList);
 		pList = null;
-		
+
 		return pMap;
 	}
 }
