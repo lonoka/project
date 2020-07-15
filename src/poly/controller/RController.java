@@ -32,6 +32,12 @@ public class RController {
 	@Resource(name = "CommuService")
 	private ICommuService commuService;
 
+	@RequestMapping(value = "cssTest")
+	public String cssTest(HttpServletRequest request, Model model, HttpSession session) throws Exception {
+
+		return "/main/main";
+	}
+	
 	@RequestMapping(value = "cTest")
 	@ResponseBody
 	public String cTest(HttpServletRequest request, Model model, HttpSession session) throws Exception {

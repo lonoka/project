@@ -22,7 +22,7 @@ public class SchedulerService implements ISchedulerService {
 	@Resource(name = "CommuService")
 	private ICommuService commuService;
 	
-	@Scheduled(cron = "0 5 0/1 * * ?")
+	//@Scheduled(cron = "0 5 0/1 * * ?")
 	@Override
 	public void sDcComCrawlling() throws Exception {
 		List<String> sList = new ArrayList<String>();
@@ -34,7 +34,7 @@ public class SchedulerService implements ISchedulerService {
 		}
 	}
 
-	@Scheduled(cron = "0 5 0/1 * * ?")
+	//@Scheduled(cron = "0 5 0/1 * * ?")
 	@Override
 	public void sSlrCrawlling() throws Exception {
 		List<String> sList = new ArrayList<String>();
@@ -46,7 +46,7 @@ public class SchedulerService implements ISchedulerService {
 		}
 	}
 
-	@Scheduled(cron = "0 5 0/1 * * ?")
+	//@Scheduled(cron = "0 5 0/1 * * ?")
 	@Override
 	public void sPpomCrawlling() throws Exception {
 		List<String> sList = new ArrayList<String>();
@@ -58,7 +58,7 @@ public class SchedulerService implements ISchedulerService {
 		}
 	}
 
-	@Scheduled(cron = "0 5 0/1 * * ?")
+	//@Scheduled(cron = "0 5 0/1 * * ?")
 	@Override
 	public void s82CookCrawlling() throws Exception {
 		List<String> sList = new ArrayList<String>();
@@ -71,7 +71,7 @@ public class SchedulerService implements ISchedulerService {
 		
 	}
 
-	@Scheduled(cron = "0 5 0/1 * * ?")
+	//@Scheduled(cron = "0 5 0/1 * * ?")
 	@Override
 	public void sMlbCrawlling() throws Exception {
 		List<String> sList = new ArrayList<String>();
