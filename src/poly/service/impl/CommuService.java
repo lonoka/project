@@ -779,6 +779,192 @@ public class CommuService implements ICommuService {
 		return 0;
 	}
 
+	// 데이터 분석 테스트
+	@Override
+	public int AnalysisTest(String str) throws Exception {
+
+		String comu = "";
+
+		if (str.contains("DcCom_")) {
+			comu = "컴퓨터 본체 갤러리";
+		} else if (str.contains("Slr_")) {
+			comu = "SLR클럽";
+		} else if (str.contains("Ppom_")) {
+			comu = "뽐뿌";
+		} else if (str.contains("82Cook_")) {
+			comu = "82쿡";
+		} else if (str.contains("Mlb_")) {
+			comu = "MLBPARK";
+		}
+
+		// R 연결 후 라이브러리 추가
+		// RConnection c = new RConnection("54.180.67.42",6311);
+		RConnection c = new RConnection("192.168.170.161", 6311);
+		c.login("lonoka", "scarlet14!");
+
+		String colNm = str + DateUtil.getDateTime("yyyyMMddHH");
+		String colStr = colNm;
+
+		List<CommuDTO> rList = commuService.getData(colNm);
+
+		if (rList == null) {
+			rList = new ArrayList<CommuDTO>();
+		}
+		if (rList.size() > 1) {
+			String tmp = "";
+			String[] title = new String[rList.size()];
+			String[] writer = new String[rList.size()];
+			String[] time = new String[rList.size()];
+			for (int i = 0; i < rList.size(); i++) {
+				String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
+				title[i] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
+				writer[i] = rList.get(i).getWriter();
+				time[i] = rList.get(i).getTime().substring(0, 15) + "0:00";
+
+			}
+			c.assign("title", title);
+			// 형태소 분석
+			c.eval("m_df <- title %>% SimplePos09 %>% melt %>% as_tibble %>% select(3,1)");
+			c.eval("m_df <- m_df %>% mutate(noun=str_match(value, '([A-Z|a-z|0-9|가-힣]+)/N')[,2]) %>% na.omit");
+			c.eval("wordList <- m_df$noun");
+			c.eval("m_df <- m_df %>% count(noun, sort = TRUE)");
+			c.eval("m_df <- filter(m_df,nchar(noun)>=2)");
+			c.eval("m_df <- filter(m_df,n>=2)");
+			// 긍정 부정 분석
+			c.eval("wordList = unlist(wordList)");
+			c.eval("posM = match(wordList, positive)");
+			c.eval("posM = !is.na(posM)");
+			c.eval("negM = match(wordList, negative)");
+			c.eval("negM = !is.na(negM)");
+
+			// 형태소 분석 결과 몽고DB에 넣기
+			REXP x = c.eval("m_df$noun");
+			REXP y = c.eval("m_df$n");
+			colNm = "Analysis" + str + DateUtil.getDateTime("yyyyMMddHH");
+
+			List<DataDTO> pList = new ArrayList<DataDTO>();
+			DataDTO pDTO = new DataDTO();
+			String[] noun = x.asStrings();
+			String[] count = y.asStrings();
+
+			for (int i = 0; i < noun.length; i++) {
+				pDTO = new DataDTO();
+				pDTO.setAnalysis_time(colNm);
+				pDTO.setCommu_name(comu);
+				pDTO.setWord(noun[i]);
+				pDTO.setCount(Integer.parseInt(count[i]));
+				pList.add(pDTO);
+				pDTO = null;
+			}
+			commuMapper.createCollection(colNm);
+			commuMapper.insertAnalysisData(pList, colNm);
+
+			pList = null;
+
+			// 긍정 부정 결과 몽고DB에 넣기
+
+			colNm = "Opinion" + str + DateUtil.getDateTime("yyyyMMddHH");
+			pList = new ArrayList<DataDTO>();
+			x = c.eval("sum(posM)");
+			y = c.eval("sum(negM)");
+
+			pDTO = new DataDTO();
+			pDTO.setAnalysis_time(colNm);
+			pDTO.setCommu_name(comu);
+			pDTO.setWord("긍정");
+			pDTO.setCount(Integer.parseInt(x.asString()));
+			pList.add(pDTO);
+			pDTO = null;
+
+			pDTO = new DataDTO();
+			pDTO.setAnalysis_time(colNm);
+			pDTO.setCommu_name(comu);
+			pDTO.setWord("부정");
+			pDTO.setCount(Integer.parseInt(y.asString()));
+			pList.add(pDTO);
+			pDTO = null;
+
+			commuMapper.createCollection(colNm);
+			commuMapper.insertAnalysisData(pList, colNm);
+
+			pList = null;
+
+			// 글쓴이 분석 결과 몽고 DB에 넣기
+
+			colNm = "Writer" + str + DateUtil.getDateTime("yyyyMMddHH");
+			pList = new ArrayList<DataDTO>();
+
+			List<String> writer_name = new ArrayList<String>();
+			List<Integer> writer_count = new ArrayList<Integer>();
+
+			for (int i = 0; i < writer.length; i++) {
+				if (!writer_name.contains(writer[i])) {
+					writer_name.add(writer[i]);
+					int cnt = 0;
+					for (int j = i; j < writer.length; j++) {
+						if (writer[i].equals(writer[j])) {
+							cnt++;
+						}
+					}
+					writer_count.add(cnt);
+				}
+			}
+			for (int i = 0; i < writer_name.size(); i++) {
+				pDTO = new DataDTO();
+				pDTO.setAnalysis_time(colNm);
+				pDTO.setCommu_name(comu);
+				pDTO.setWord(writer_name.get(i));
+				pDTO.setCount(writer_count.get(i));
+				pList.add(pDTO);
+				pDTO = null;
+			}
+
+			commuMapper.createCollection(colNm);
+			commuMapper.insertAnalysisData(pList, colNm);
+
+			pList = null;
+			// 글쓴 시간대별 분석 결과 몽고 DB에 넣기
+
+			colNm = "Time" + str + DateUtil.getDateTime("yyyyMMddHH");
+			pList = new ArrayList<DataDTO>();
+
+			List<String> time_section = new ArrayList<String>();
+			List<Integer> time_count = new ArrayList<Integer>();
+
+			for (int i = 0; i < time.length; i++) {
+				if (!time_section.contains(time[i])) {
+					time_section.add(time[i]);
+					int cnt = 0;
+					for (int j = i; j < time.length; j++) {
+						if (time[i].equals(time[j])) {
+							cnt++;
+						}
+					}
+					time_count.add(cnt);
+				}
+			}
+			for (int i = 0; i < time_section.size(); i++) {
+				pDTO = new DataDTO();
+				pDTO.setAnalysis_time(colNm);
+				pDTO.setCommu_name(comu);
+				pDTO.setWord(time_section.get(i));
+				pDTO.setCount(time_count.get(i));
+				pList.add(pDTO);
+				pDTO = null;
+			}
+
+			commuMapper.createCollection(colNm);
+			commuMapper.insertAnalysisData(pList, colNm);
+
+			pList = null;
+
+		}
+		// 여러 크롤링 하나하나 찾아서 넣기
+		c.close();
+
+		return 0;
+	}
+
 	// 특수기호 제거 함수
 	public static String StringReplace(String str) {
 		String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";

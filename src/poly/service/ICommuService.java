@@ -52,5 +52,7 @@ public interface ICommuService {
 	// 코모란 분석
 	public Map<String, Object> komoran(String str) throws Exception;
 	
+	//Rserve 분석 나누기
+	public int AnalysisTest(String str) throws Exception;
 
 }

@@ -46,14 +46,6 @@ public class RController {
 		return "success";
 	}
 
-	@RequestMapping(value = "kTest")
-	@ResponseBody
-	public String kTest(HttpServletRequest request, Model model, HttpSession session) throws Exception {
-
-		commuService.SearchDcComData("폴리텍");
-		return "success";
-	}
-
 	@RequestMapping(value = "komoran_test")
 	@ResponseBody
 	public Map<String,Object> komoran_test(HttpServletRequest request, Model model, HttpSession session) throws Exception {
