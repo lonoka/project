@@ -803,56 +803,95 @@ public class CommuService implements ICommuService {
 		c.login("lonoka", "scarlet14!");
 
 		String colNm = str + DateUtil.getDateTime("yyyyMMddHH");
-		String colStr = colNm;
 
 		List<CommuDTO> rList = commuService.getData(colNm);
 
+		//형태소 분석 결과값이 저장될 리스트
+		List<String> sList = new ArrayList<String>();
+		List<Integer> iList = new ArrayList<Integer>();
+		
+		// 감성분석 결과값이 저장될 변수
+		int pos = 0;
+		int neg = 0;
+		
+		
 		if (rList == null) {
 			rList = new ArrayList<CommuDTO>();
 		}
 		if (rList.size() > 1) {
-			String tmp = "";
-			String[] title = new String[rList.size()];
+			String[] title = null;
 			String[] writer = new String[rList.size()];
 			String[] time = new String[rList.size()];
+			String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
+			int Cnt = 0;
+			
+			
 			for (int i = 0; i < rList.size(); i++) {
-				String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
-				title[i] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
+				if (i == 0) {
+					title = new String[50];
+				}
+				title[i%50] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
 				writer[i] = rList.get(i).getWriter();
 				time[i] = rList.get(i).getTime().substring(0, 15) + "0:00";
+				if (Cnt % 50 == 49) {
+					Cnt = 0;
+					c.assign("title", title);
+					// 형태소 분석
+					c.eval("m_df <- title %>% SimplePos09 %>% melt %>% as_tibble %>% select(3,1)");
+					c.eval("m_df <- m_df %>% mutate(noun=str_match(value, '([A-Z|a-z|0-9|가-힣]+)/N')[,2]) %>% na.omit");
+					c.eval("wordList <- m_df$noun");
+					c.eval("m_df <- m_df %>% count(noun, sort = TRUE)");
+					c.eval("m_df <- filter(m_df,nchar(noun)>=2)");
+					c.eval("m_df <- filter(m_df,n>=2)");
+					// 긍정 부정 분석
+					c.eval("wordList = unlist(wordList)");
+					c.eval("posM = match(wordList, positive)");
+					c.eval("posM = !is.na(posM)");
+					c.eval("negM = match(wordList, negative)");
+					c.eval("negM = !is.na(negM)");
 
+					// 형태소 분석 결과 몽고DB에 넣기
+					REXP x = c.eval("m_df$noun");
+					REXP y = c.eval("m_df$n");
+					
+					// 형태소 분석 결과 배열로 변경
+					String[] noun = x.asStrings();
+					String[] count = y.asStrings();
+					
+					// 형태소 분석 결과값이 sList에 있는지 확인 후 넣기
+					for (int j = 0; j < noun.length; j++) {
+						if(sList.contains(noun[j])) {
+							iList.set(j, iList.get(j)+Integer.parseInt(count[j]));
+						}else {
+							sList.add(noun[j]);
+							iList.add(Integer.parseInt(count[j]));
+						}
+					}
+					
+					// 감성분석 결과값
+					x = c.eval("sum(posM)");
+					y = c.eval("sum(negM)");
+					
+					pos += Integer.parseInt(x.toString());
+					neg += Integer.parseInt(y.toString());
+					
+					title = new String[50];
+				} else {
+					Cnt += 1;
+				}
 			}
-			c.assign("title", title);
-			// 형태소 분석
-			c.eval("m_df <- title %>% SimplePos09 %>% melt %>% as_tibble %>% select(3,1)");
-			c.eval("m_df <- m_df %>% mutate(noun=str_match(value, '([A-Z|a-z|0-9|가-힣]+)/N')[,2]) %>% na.omit");
-			c.eval("wordList <- m_df$noun");
-			c.eval("m_df <- m_df %>% count(noun, sort = TRUE)");
-			c.eval("m_df <- filter(m_df,nchar(noun)>=2)");
-			c.eval("m_df <- filter(m_df,n>=2)");
-			// 긍정 부정 분석
-			c.eval("wordList = unlist(wordList)");
-			c.eval("posM = match(wordList, positive)");
-			c.eval("posM = !is.na(posM)");
-			c.eval("negM = match(wordList, negative)");
-			c.eval("negM = !is.na(negM)");
-
-			// 형태소 분석 결과 몽고DB에 넣기
-			REXP x = c.eval("m_df$noun");
-			REXP y = c.eval("m_df$n");
+			
 			colNm = "Analysis" + str + DateUtil.getDateTime("yyyyMMddHH");
 
 			List<DataDTO> pList = new ArrayList<DataDTO>();
 			DataDTO pDTO = new DataDTO();
-			String[] noun = x.asStrings();
-			String[] count = y.asStrings();
 
-			for (int i = 0; i < noun.length; i++) {
+			for (int i = 0; i < sList.size(); i++) {
 				pDTO = new DataDTO();
 				pDTO.setAnalysis_time(colNm);
 				pDTO.setCommu_name(comu);
-				pDTO.setWord(noun[i]);
-				pDTO.setCount(Integer.parseInt(count[i]));
+				pDTO.setWord(sList.get(i));
+				pDTO.setCount(iList.get(i));
 				pList.add(pDTO);
 				pDTO = null;
 			}
@@ -865,14 +904,12 @@ public class CommuService implements ICommuService {
 
 			colNm = "Opinion" + str + DateUtil.getDateTime("yyyyMMddHH");
 			pList = new ArrayList<DataDTO>();
-			x = c.eval("sum(posM)");
-			y = c.eval("sum(negM)");
 
 			pDTO = new DataDTO();
 			pDTO.setAnalysis_time(colNm);
 			pDTO.setCommu_name(comu);
 			pDTO.setWord("긍정");
-			pDTO.setCount(Integer.parseInt(x.asString()));
+			pDTO.setCount(pos);
 			pList.add(pDTO);
 			pDTO = null;
 
@@ -880,7 +917,7 @@ public class CommuService implements ICommuService {
 			pDTO.setAnalysis_time(colNm);
 			pDTO.setCommu_name(comu);
 			pDTO.setWord("부정");
-			pDTO.setCount(Integer.parseInt(y.asString()));
+			pDTO.setCount(neg);
 			pList.add(pDTO);
 			pDTO = null;
 
