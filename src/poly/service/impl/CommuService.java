@@ -806,15 +806,14 @@ public class CommuService implements ICommuService {
 
 		List<CommuDTO> rList = commuService.getData(colNm);
 
-		//형태소 분석 결과값이 저장될 리스트
+		// 형태소 분석 결과값이 저장될 리스트
 		List<String> sList = new ArrayList<String>();
 		List<Integer> iList = new ArrayList<Integer>();
-		
+
 		// 감성분석 결과값이 저장될 변수
 		int pos = 0;
 		int neg = 0;
-		
-		
+
 		if (rList == null) {
 			rList = new ArrayList<CommuDTO>();
 		}
@@ -824,13 +823,12 @@ public class CommuService implements ICommuService {
 			String[] time = new String[rList.size()];
 			String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
 			int Cnt = 0;
-			
-			
+
 			for (int i = 0; i < rList.size(); i++) {
 				if (i == 0) {
 					title = new String[50];
 				}
-				title[i%50] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
+				title[i % 50] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
 				writer[i] = rList.get(i).getWriter();
 				time[i] = rList.get(i).getTime().substring(0, 15) + "0:00";
 				if (Cnt % 50 == 49) {
@@ -853,39 +851,42 @@ public class CommuService implements ICommuService {
 					// 형태소 분석 결과 몽고DB에 넣기
 					REXP x = c.eval("m_df$noun");
 					REXP y = c.eval("m_df$n");
-					
+
 					// 형태소 분석 결과 배열로 변경
 					String[] noun = x.asStrings();
 					String[] count = y.asStrings();
-					
+
 					// 형태소 분석 결과값이 sList에 있는지 확인 후 넣기
 					for (int j = 0; j < noun.length; j++) {
-						if(sList.contains(noun[j])) {
-							iList.set(j, iList.get(j)+Integer.parseInt(count[j]));
-						}else {
+						if (sList.contains(noun[j])) {
+							iList.set(j, iList.get(j) + Integer.parseInt(count[j]));
+						} else {
 							sList.add(noun[j]);
 							iList.add(Integer.parseInt(count[j]));
 						}
 					}
-					
+
 					// 감성분석 결과값
 					x = c.eval("sum(posM)");
 					y = c.eval("sum(negM)");
-					
+
 					pos += Integer.parseInt(x.toString());
 					neg += Integer.parseInt(y.toString());
-					
+
 					title = new String[50];
 				} else {
 					Cnt += 1;
 				}
 			}
-			
+
+			// 분석 결과 저장 컬렉션 지정
 			colNm = "Analysis" + str + DateUtil.getDateTime("yyyyMMddHH");
 
+			// 분석 결과 저장하기 위한 DataDTO 타입 List 선언
 			List<DataDTO> pList = new ArrayList<DataDTO>();
 			DataDTO pDTO = new DataDTO();
 
+			// 분석 결과 하나하나 DTO에 넣어서 pList에 넣기
 			for (int i = 0; i < sList.size(); i++) {
 				pDTO = new DataDTO();
 				pDTO.setAnalysis_time(colNm);
