@@ -50,19 +50,29 @@ public class CommuService implements ICommuService {
 	@Override
 	public int collectDcComData() throws Exception {
 		int res = 0;
+		// 컬렉션 이름 지정
 		String colNm = "DcCom_" + DateUtil.getDateTime("yyyyMMddHH");
+		// 크롤링 한 데이터를 몽고DB에 저장시키기 위한 List변수
 		List<CommuDTO> pList = new ArrayList<CommuDTO>();
+		// 1~20페이지의 글을 크롤링 하기 위한 for문
 		for (int i = 1; i <= 20; i++) {
+			// 크롤링 할 web page url
 			String url = "https://gall.dcinside.com/board/lists/?id=pridepc_new3&list_num=30&page=";
 			url = url + Integer.toString(i);
 
+			// 크롤링 결과값 변수
 			Document doc = null;
 
+			// Jsoup을 사용한 크롤링
 			doc = Jsoup.connect(url).get();
 
+			// 크롤링 결과값에서 table중 class에 gall_list 가 있는 부분만 추출
 			Elements element = doc.select("table.gall_list");
 
+			// 추출한 결과물 안에서 tr중 us-post class를 가진 변수들을 추출하여 Iterator로 만듬
 			Iterator<Element> postList = element.select("tr.us-post").iterator();
+
+			// Iterator 반복문
 			while (postList.hasNext()) {
 				Element postInfo = postList.next();
 				String title = postInfo.select("td.gall_tit a").eq(0).text();
@@ -87,6 +97,7 @@ public class CommuService implements ICommuService {
 			}
 		}
 
+		// 몽고DB에 컬랙션 생성 후 데이터 삽입
 		commuMapper.createCollection(colNm);
 		commuMapper.insertData(pList, colNm);
 
@@ -522,7 +533,7 @@ public class CommuService implements ICommuService {
 		return rList;
 	}
 
-	// 크롤링 데이터 가져오기
+	// 분석 데이터 가져오기
 	@Override
 	public List<DataDTO> getAnalysisData(String colNm) throws Exception {
 		List<DataDTO> rList = commuMapper.getAnalysisData(colNm);
@@ -576,7 +587,7 @@ public class CommuService implements ICommuService {
 	// 분석 데이터 있는지 없는지 확인
 	@Override
 	public int checkAnalysisData(List<String> sList) throws Exception {
-
+		// 변수로 받아온 sList의 크기 만큼 for문 반복
 		for (int i = 0; i < sList.size(); i++) {
 			String colNm = "Analysis" + sList.get(i) + DateUtil.getDateTime("yyyyMMddHH");
 			String str = sList.get(i) + DateUtil.getDateTime("yyyyMMddHH");
@@ -586,8 +597,10 @@ public class CommuService implements ICommuService {
 				rList = new ArrayList<DataDTO>();
 			}
 			if (rList.size() == 0) {
+				// 분석된 결과가 없는 경우 데이터 분석 시작
 				commuService.AnalysisData(sList.get(i));
 			}
+			// 분석이 완료된경우 check컬랙션에 있는 false값을 true로 바꿈
 			commuMapper.updateCheckData(str);
 		}
 		return 1;
