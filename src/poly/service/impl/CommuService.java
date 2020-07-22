@@ -629,51 +629,66 @@ public class CommuService implements ICommuService {
 		RConnection c = new RConnection("192.168.170.161", 6311);
 		c.login("lonoka", "scarlet14!");
 
+		// 데이터를 가져올 컬렉션 지정
 		String colNm = str + DateUtil.getDateTime("yyyyMMddHH");
-		String colStr = colNm;
 
+		// 컬렉션에 저장된 정보 가져오기
 		List<CommuDTO> rList = commuService.getData(colNm);
 
+		// null값 체크
 		if (rList == null) {
 			rList = new ArrayList<CommuDTO>();
 		}
 		if (rList.size() > 1) {
-			String tmp = "";
+			// Rserve에 넣기 위해 List를 String배열로 바꾸기 위한 변수
 			String[] title = new String[rList.size()];
 			String[] writer = new String[rList.size()];
 			String[] time = new String[rList.size()];
+			// 컬렉션에서 가져온 정보를 분석하기 위해 각각의 String배열로 변경
 			for (int i = 0; i < rList.size(); i++) {
+				// 특수기호 제거를 위한 정규식
 				String match = "[^\uAC00-\uD7A3xfe0-9a-zA-Z\\s]";
 				title[i] = rList.get(i).getTitle().replaceAll(match, "").toLowerCase();
 				writer[i] = rList.get(i).getWriter();
 				time[i] = rList.get(i).getTime().substring(0, 15) + "0:00";
-
 			}
+			// R 문법
+			// Rserve에 String배열을 넘김
 			c.assign("title", title);
 			// 형태소 분석
 			c.eval("m_df <- title %>% SimplePos09 %>% melt %>% as_tibble %>% select(3,1)");
 			c.eval("m_df <- m_df %>% mutate(noun=str_match(value, '([A-Z|a-z|0-9|가-힣]+)/N')[,2]) %>% na.omit");
+			// 형태소 분석 중 긍정,부정 분석을 위해 새로운 wordList 란 이름의 리스트 생성
 			c.eval("wordList <- m_df$noun");
 			c.eval("m_df <- m_df %>% count(noun, sort = TRUE)");
 			c.eval("m_df <- filter(m_df,nchar(noun)>=2)");
 			c.eval("m_df <- filter(m_df,n>=2)");
 			// 긍정 부정 분석
 			c.eval("wordList = unlist(wordList)");
+			// wordList에 있는 단어가 postive에 있는 경우 true, 없는경우 na 즉 결측치 반환
 			c.eval("posM = match(wordList, positive)");
+			// 결측치 제거
 			c.eval("posM = !is.na(posM)");
 			c.eval("negM = match(wordList, negative)");
 			c.eval("negM = !is.na(negM)");
 
 			// 형태소 분석 결과 몽고DB에 넣기
+			// Rserve에서 값을 받아오기 위해 REXP 사용
+			// REXP 는 여러 형태로 변환 가능
+			// m_df의 noun은 형태소 분석 결과값중 길이가 2 이상인 단어
+			// m_df의 n은 형태소 분셕 결과값중 빈도수가 2 이상인 단어의 빈도수
+			// m_df의 결측치를 제거하여 noun와 n은 길이가 같음
 			REXP x = c.eval("m_df$noun");
 			REXP y = c.eval("m_df$n");
+			
+			// 분석 결과를 저장하기 위한 컬랙션 지정
 			colNm = "Analysis" + str + DateUtil.getDateTime("yyyyMMddHH");
-
 			List<DataDTO> pList = new ArrayList<DataDTO>();
 			DataDTO pDTO = new DataDTO();
 			String[] noun = x.asStrings();
 			String[] count = y.asStrings();
 
+			// 형태소 분석 결과값을 몽고DB에 저장하기 위해 pList에 하나 하나 저장
 			for (int i = 0; i < noun.length; i++) {
 				pDTO = new DataDTO();
 				pDTO.setAnalysis_time(colNm);
