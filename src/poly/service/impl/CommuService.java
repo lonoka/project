@@ -704,7 +704,7 @@ public class CommuService implements ICommuService {
 			pList = null;
 
 			// 긍정 부정 결과 몽고DB에 넣기
-
+			
 			colNm = "Opinion" + str + DateUtil.getDateTime("yyyyMMddHH");
 			pList = new ArrayList<DataDTO>();
 			x = c.eval("sum(posM)");
@@ -732,13 +732,17 @@ public class CommuService implements ICommuService {
 			pList = null;
 
 			// 글쓴이 분석 결과 몽고 DB에 넣기
-
+			
 			colNm = "Writer" + str + DateUtil.getDateTime("yyyyMMddHH");
 			pList = new ArrayList<DataDTO>();
 
 			List<String> writer_name = new ArrayList<String>();
 			List<Integer> writer_count = new ArrayList<Integer>();
 
+			/**
+			 * 글쓴이 이름 워드카운트 writer_name 리스트에 이름이 없는 경우 writer_name 리스트에 이름을 넣고 있는경우 for문 진행
+			 * writer_name리스트에 이름이 들어간 경우 writer[]배열 내부에 들어간 이름과 같은게 몇개 있는지 카운트 하여 writer_count 리스트에 넣음
+			 * */ 
 			for (int i = 0; i < writer.length; i++) {
 				if (!writer_name.contains(writer[i])) {
 					writer_name.add(writer[i]);
@@ -1038,6 +1042,7 @@ public class CommuService implements ICommuService {
 		return str;
 	}
 
+	// 크롤링이 진행중인지 완료되었는지 확인
 	@Override
 	public boolean checkCrawling(List<String> sList) throws Exception {
 		for (int i = 0; i < sList.size(); i++) {
@@ -1052,6 +1057,9 @@ public class CommuService implements ICommuService {
 	// 검색 크롤링 실행
 	@Override
 	public int checkSearchCrawlingData(List<String> sList, String str) throws Exception {
+		// 크롤링 검색 결과가 있는지 없는지 확인
+		// 크롤링 검색 결과가 있는 경우 1 반환
+		// 크롤링 검색 결과가 없는 경우 체크컬렉션에 검색어 입력 후 검색 시작 
 		for (int i = 0; i < sList.size(); i++) {
 			String colNm = sList.get(i) + DateUtil.getDateTime("yyyyMMddHH");
 			List<CommuDTO> rList = commuMapper.getData(colNm);
@@ -1081,7 +1089,9 @@ public class CommuService implements ICommuService {
 		}
 		return 1;
 	}
-
+	
+	
+	// 검색시 로그인이 필요하여 header를 채크해주고 loginCookie 가져와서 크롤링
 	@Override
 	public int SearchSlrData(String str) throws Exception {
 		Map<String, String> header = new HashMap<String, String>();
