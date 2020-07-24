@@ -1041,6 +1041,22 @@ public class CommuService implements ICommuService {
 		str = str.replaceAll(match, "");
 		return str;
 	}
+	
+	// 정렬 함수
+	public static List<CommuDTO> sortCollection(List<CommuDTO> pList){
+		Collections.sort(pList, new Comparator<CommuDTO>() {
+			@Override
+			public int compare(CommuDTO pDTO, CommuDTO rDTO) {
+				if (pDTO.getTime().compareTo(rDTO.getTime()) < 0) {
+					return 1;
+				} else if (pDTO.getTime().compareTo(rDTO.getTime()) > 0) {
+					return -1;
+				}
+				return 0;
+			}
+		});
+		return pList;
+	}
 
 	// 크롤링이 진행중인지 완료되었는지 확인
 	@Override
