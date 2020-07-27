@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="poly.persistance.mapper.IUserMapper">
+	<!-- 회원 가입하기 -->
+	<insert id="insertUserInfo" parameterType="UserDTO">
+		INSERT INTO user_info
+		(
+		USER_ID,
+		USER_NAME,
+		PASSWORD,
+		USER_MAIL,
+		USER_AUTHOR,
+		REG_ID,
+		REG_DT,
+		CHG_ID,
+		CHG_DT
+		)
+		VALUES (
+		#{user_id},
+		#{user_name},
+		#{password},
+		#{user_mail},
+		0,
+		#{user_id},
+		SYSDATE(),
+		#{user_id},
+		SYSDATE()
+		)
+	</insert>
+
+	<!-- 아이디 체크 -->
+	<select id="ckeckId" parameterType="UserDTO" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM
+		user_info
+		WHERE USER_ID=#{user_id}
+	</select>
+
+	<!-- 이메일 체크 -->
+	<select id="ckeckMail" parameterType="UserDTO" resultType="int">
+		SELECT COUNT(*)
+		FROM
+		user_info
+		WHERE USER_MAIL=#{user_mail}
+	</select>
+
+	<!-- 로그인 -->
+	<select id="getLogin" parameterType="UserDTO"
+		resultType="UserDTO">
+		SELECT
+		USER_NAME,
+		USER_ID,
+		USER_AUTHOR,
+		USER_MAIL
+		FROM
+		user_info
+		WHERE
+		USER_ID = #{user_id} AND PASSWORD = #{password}
+	</select>
+
+	<!-- 아이디 정보 찾기 -->
+	<select id="getIdInfo" parameterType="UserDTO"
+		resultType="UserDTO">
+		SELECT
+		USER_ID as user_id
+		FROM
+		user_info
+		WHERE
+		USER_NAME=#{user_name} AND USER_MAIL=#{user_mail}
+	</select>
+
+	<!-- 비밀번호 정보 찾기 -->
+	<select id="getPwInfo" parameterType="UserDTO"
+		resultType="UserDTO">
+		SELECT
+		PASSWORD as password
+		FROM
+		user_info
+		WHERE
+		USER_NAME=#{user_name} AND USER_MAIL=#{user_mail} AND USER_ID =
+		#{user_id}
+	</select>
+
+	<!-- 비밀번호 업데이트 -->
+	<update id="updatePwInfo" parameterType="UserDTO">
+		UPDATE
+		user_info
+		SET
+		PASSWORD = #{password}
+		WHERE
+		USER_ID=#{user_id}
+	</update>
+
+	<!-- 회원정보 수정 -->
+	<update id="updateUserInfo" parameterType="UserDTO">
+		UPDATE
+		user_info
+		SET
+		USER_NAME = #{user_name},
+		PASSWORD = #{password},
+		CHG_ID = #{user_id},
+		CHG_DT = SYSDATE()
+		WHERE
+		USER_ID = #{user_id}
+	</update>
+
+	<!-- 회원 정보 찾기 -->
+	<select id="getUserInfo" parameterType="UserDTO"
+		resultType="UserDTO">
+		SELECT
+		USER_ID,
+		USER_NAME,
+		USER_MAIL,
+		USER_AUTHOR
+		FROM
+		user_info
+		WHERE
+		USER_ID=#{user_id}
+	</select>
+
+	<!-- 회원 리스트 전체 -->
+	<select id="getTotal" parameterType="UserListDTO" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM
+		user_info
+		<if test='searchSelect.equals("userId")'>
+		WHERE USER_ID LIKE CONCAT('%', #{searchCont}, '%')
+		</if>
+		<if test='searchSelect.equals("userName")'>
+		WHERE USER_NAME LIKE CONCAT('%', #{searchCont}, '%')
+		</if>
+	</select>
+
+	<!-- 회원 리스트 -->
+	<select id="getUserList" parameterType="UserListDTO"
+		resultType="UserDTO">
+		SELECT
+		USER_ID,
+		USER_NAME,
+		USER_MAIL,
+		USER_AUTHOR
+		FROM
+		user_info
+		<if test='searchSelect.equals("userId")'>
+		WHERE USER_ID LIKE CONCAT('%', #{searchCont}, '%')
+		</if>
+		<if test='searchSelect.equals("userName")'>
+		WHERE USER_NAME LIKE CONCAT('%', #{searchCont}, '%')
+		</if>
+		Limit #{pgNum} , 10
+	</select>
+	
+	<!-- 사용자 권한 업데이트 -->
+	<update id="modifyAuthor" parameterType="UserDTO">
+		UPDATE
+		user_info
+		SET
+		<if test='user_author.equals("0")'>
+		USER_AUTHOR = '1'
+		</if>
+		<if test='user_author.equals("1")'>
+		USER_AUTHOR = '0'
+		</if>
+		WHERE
+		USER_ID=#{user_id}
+	</update>
+	
+	<!-- 회원 정보 삭제 -->
+	<delete id="deleteUserInfo" parameterType="UserDTO">
+		DELETE
+		FROM
+			user_info
+		WHERE
+			USER_ID=#{user_id}
+	</delete>
+
+</mapper>
