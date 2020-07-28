@@ -1044,9 +1044,11 @@ public class CommuService implements ICommuService {
 	
 	// 정렬 함수
 	public static List<CommuDTO> sortCollection(List<CommuDTO> pList){
+		// collection.sort에서 commuDTO내부의 값으로 비교하기 위해
 		Collections.sort(pList, new Comparator<CommuDTO>() {
 			@Override
 			public int compare(CommuDTO pDTO, CommuDTO rDTO) {
+				//compareTo 함수는 문자열과 문자열의 크기 비교 가능
 				if (pDTO.getTime().compareTo(rDTO.getTime()) < 0) {
 					return 1;
 				} else if (pDTO.getTime().compareTo(rDTO.getTime()) > 0) {
