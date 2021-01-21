@@ -98,14 +98,14 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.7.2</version>
+			<version>2.9.10.7</version>
 		</dependency>
 
 		<!-- redis value를 json형태로 표현하기 위해 추가 setValueSerializer(json) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.9</version>
+			<version>2.9.10.7</version>
 		</dependency>
 
 		<!-- redis 연동을 위해 Driver 파일 다운로드 -->
